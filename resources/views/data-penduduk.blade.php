@@ -17,7 +17,7 @@
         }
     </style>
     <div class="container py-4">
-        <h5 class="mb-4">Daftar Tanah</h5>
+        <h5 class="mb-4" style="margin-top:70px;">Daftar Tanah</h5>
 
         <div class="mb-3">
             <input type="text" id="searchInput" class="form-control"
