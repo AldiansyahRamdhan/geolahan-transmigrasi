@@ -45,12 +45,7 @@
                 max-width: none;
             }
 
-            #filterContainer {
-                top: 150px !important;
-                right: 100px !important;
-                transform: translateX(50%);
-                width: 40% !important;
-            }
+
 
             label {
                 font-size: 12px !important;
@@ -73,41 +68,136 @@
         </div>
     </div>
 
-    <div id="filterContainer" class="card p-2" style="position: absolute; top: 120px; right: 10px; z-index: 1000;">
-        <strong>Filter Luas Tanah:</strong>
-        <div class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="radio" name="filterLuas" id="all" value="all" checked>
-            <label class="form-check-label d-flex align-items-center" for="all">
-                <span
-                    style="background:#000; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
-                Semua
-            </label>
+    <style>
+        .filter-card {
+            width: 240px;
+            position: absolute;
+            right: 10px;
+            z-index: 1000;
+        }
+    </style>
+
+    <style>
+        @media (max-width: 768px) {
+            #filtersWrapper {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                top: 70;
+                background: rgba(255, 255, 255, 0.95);
+                overflow-y: auto;
+                padding: 1rem;
+                z-index: 1050;
+            }
+
+            #filtersWrapper .card {
+                position: static !important;
+                width: 100% !important;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+
+    <!-- Tombol untuk menampilkan filter di mobile -->
+    <button class="btn btn-primary d-md-none" id="toggleFilterBtn"
+        style="position: fixed; top: 150px; right: 20px; z-index: 1100;">
+        Filter
+    </button>
+
+    <div id="filtersWrapper" class="d-none d-md-block">
+        <div id="filterContainer" class="card p-2 filter-card" style="top: 120px;">
+            <strong>Filter Luas Tanah:</strong>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterLuas" id="all" value="all" checked>
+                <label class="form-check-label d-flex align-items-center" for="all">
+                    <span
+                        style="background:#000; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
+                    Semua
+                </label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterLuas" id="lt700" value="lt700">
+                <label class="form-check-label d-flex align-items-center" for="lt700">
+                    <span
+                        style="background:#3388ff; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
+                    &lt; 700 m²
+                </label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterLuas" id="700to1900" value="700to1900">
+                <label class="form-check-label d-flex align-items-center" for="700to1900">
+                    <span
+                        style="background:#ff5733; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
+                    700–1900 m²
+                </label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterLuas" id="gt1900" value="gt1900">
+                <label class="form-check-label d-flex align-items-center" for="gt1900">
+                    <span
+                        style="background:#33ff57; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
+                    &gt; 1900 m²
+                </label>
+            </div>
         </div>
-        <div class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="radio" name="filterLuas" id="lt700" value="lt700">
-            <label class="form-check-label d-flex align-items-center" for="lt700">
-                <span
-                    style="background:#3388ff; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
-                &lt; 700 m²
-            </label>
+
+        <div id="filterJenisTanah" class="card p-2 filter-card" style="top: 271px;">
+            <strong>Filter Jenis Tanah:</strong>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterJenisTanah" id="allJenis" value="all"
+                    checked>
+                <label class="form-check-label d-flex align-items-center" for="allJenis">Semua</label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterJenisTanah" id="Lempung-Berdebu"
+                    value="Lempung Berdebu">
+                <label class="form-check-label d-flex align-items-center" for="Lempung-Berdebu">Lempung Berdebu</label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterJenisTanah" id="Lempung-Liat"
+                    value="Lempung Liat">
+                <label class="form-check-label d-flex align-items-center" for="Lempung-Liat">Lempung Liat</label>
+            </div>
         </div>
-        <div class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="radio" name="filterLuas" id="700to1900" value="700to1900">
-            <label class="form-check-label d-flex align-items-center" for="700to1900">
-                <span
-                    style="background:#ff5733; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
-                700–1900 m²
-            </label>
-        </div>
-        <div class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="radio" name="filterLuas" id="gt1900" value="gt1900">
-            <label class="form-check-label d-flex align-items-center" for="gt1900">
-                <span
-                    style="background:#33ff57; width:14px; height:14px; display:inline-block; margin-right:6px; border-radius:3px;"></span>
-                &gt; 1900 m²
-            </label>
+
+        <div id="filterKadarAir" class="card p-2 filter-card" style="top: 400px;">
+            <strong>Filter Kadar Air:</strong>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterKadarAir" id="allKadar" value="all" checked>
+                <label class="form-check-label d-flex align-items-center" for="allKadar">Semua</label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterKadarAir" id="Lembap-agak-basah"
+                    value="Lembap - agak basah">
+                <label class="form-check-label d-flex align-items-center" for="Lembap-agak-basah">Lembap - agak
+                    basah</label>
+            </div>
+            <div class="form-check d-flex align-items-center gap-2">
+                <input class="form-check-input" type="radio" name="filterKadarAir" id="Agak-Basah-Basah"
+                    value="Agak Basah - Basah">
+                <label class="form-check-label d-flex align-items-center" for="Agak-Basah-Basah">Agak Basah -
+                    Basah</label>
+            </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleFilterBtn');
+            const filterWrapper = document.getElementById('filtersWrapper');
+
+            toggleBtn.addEventListener('click', () => {
+                if (filterWrapper.classList.contains('d-none')) {
+                    filterWrapper.classList.remove('d-none');
+                } else {
+                    filterWrapper.classList.add('d-none');
+                }
+            });
+        });
+    </script>
+
+
 
     <div id="map" style="margin-top: 50px"></div>
     <script src="/js/qgis2web_expressions.js"></script>
@@ -229,25 +319,58 @@
 
                     map.fitBounds(geojsonLayer.getBounds());
 
-                    // Radio filter handler
-                    document.querySelectorAll('input[name="filterLuas"]').forEach(radio => {
-                        radio.addEventListener('change', function() {
-                            const selected = this.value;
-                            geojsonLayer.clearLayers();
-                            const filteredFeatures = data.features.filter(feature => {
-                                const luas = parseFloat(feature.properties.luas);
-                                if (selected === 'lt700') return luas < 700;
-                                if (selected === '700to1900') return luas >= 700 && luas <=
-                                    1900;
-                                if (selected === 'gt1900') return luas > 1900;
-                                return true;
-                            });
-                            geojsonLayer.addData(filteredFeatures);
-                            if (filteredFeatures.length > 0) {
-                                const bounds = geojsonLayer.getBounds();
-                                if (bounds.isValid()) map.fitBounds(bounds);
-                            }
+                    // Fungsi utama untuk filter berdasarkan dua radio (luas + jenis tanah)
+                    function applyFilters() {
+                        const selectedLuas = document.querySelector('input[name="filterLuas"]:checked')?.value || 'all';
+                        const selectedJenisTanah = document.querySelector('input[name="filterJenisTanah"]:checked')
+                            ?.value || 'all';
+                        const selectedKadarAir = document.querySelector('input[name="filterKadarAir"]:checked')
+                            ?.value || 'all';
+
+                        geojsonLayer.clearLayers();
+
+                        const filteredFeatures = data.features.filter(feature => {
+                            const luas = parseFloat(feature.properties.luas);
+                            const jenis_tanah = feature.properties.jenis_tanah;
+                            const kadar_air = feature.properties.kadar_air;
+
+                            // Filter luas
+                            const matchLuas =
+                                selectedLuas === 'all' ||
+                                (selectedLuas === 'lt700' && luas < 700) ||
+                                (selectedLuas === '700to1900' && luas >= 700 && luas <= 1900) ||
+                                (selectedLuas === 'gt1900' && luas > 1900);
+
+                            // Filter jenis tanah
+                            const matchJenisTanah =
+                                selectedJenisTanah === 'all' ||
+                                jenis_tanah === selectedJenisTanah;
+
+                            // Filter kadar air
+                            const matchKadarAir =
+                                selectedKadarAir === 'all' ||
+                                kadar_air === selectedKadarAir;
+
+                            return matchLuas && matchJenisTanah && matchKadarAir;
                         });
+
+                        geojsonLayer.addData(filteredFeatures);
+
+                        if (filteredFeatures.length > 0) {
+                            const bounds = geojsonLayer.getBounds();
+                            if (bounds.isValid()) map.fitBounds(bounds);
+                        }
+                    }
+
+                    // Tambahkan event listener untuk semua filter
+                    document.querySelectorAll('input[name="filterLuas"]').forEach(radio => {
+                        radio.addEventListener('change', applyFilters);
+                    });
+                    document.querySelectorAll('input[name="filterJenisTanah"]').forEach(radio => {
+                        radio.addEventListener('change', applyFilters);
+                    });
+                    document.querySelectorAll('input[name="filterKadarAir"]').forEach(radio => {
+                        radio.addEventListener('change', applyFilters);
                     });
 
                     function debounce(func, delay = 300) {

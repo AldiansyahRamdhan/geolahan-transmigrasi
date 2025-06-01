@@ -11,6 +11,11 @@
                     <a class="nav-link {{ Request::is('/') ? 'active' : '' }}" aria-current="page"
                         href="/">Home</a>
                 </li>
+                @can('Admin')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('tanah.index') }}">Dashboard</a>
+                    </li>
+                @endcan
                 <li class="nav-item">
                     <a class="nav-link {{ Request::is('data/penduduk') ? 'active' : '' }}" href="/data/penduduk">Data
                         Tanah</a>
@@ -29,11 +34,7 @@
                             <li>
                                 <a class="dropdown-item" href="{{ route('profile.edit') }}">Profil</a>
                             </li>
-                            @can('Admin')
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('tanah.index') }}">Dashboard</a>
-                                </li>
-                            @endcan
+
                             <li>
                                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                                     @csrf
