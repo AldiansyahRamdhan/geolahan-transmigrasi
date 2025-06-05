@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TanahTransmigrasi;
+use App\Models\Rekomendasi;
 use Illuminate\Http\Request;
+use App\Models\TanahTransmigrasi;
 
 class TanahController extends Controller
 {
@@ -18,7 +19,11 @@ class TanahController extends Controller
      */
     public function create()
     {
-        return view('dashboard.geojson.create');
+        $rekomendasis = Rekomendasi::all();
+
+        return view('dashboard.geojson.create', [
+            'rekomendasis' => $rekomendasis,
+        ]);
     }
 
     /**
@@ -49,8 +54,9 @@ class TanahController extends Controller
 
     public function edit($id)
     {
+        $rekomendasis = Rekomendasi::all();
         $tanah = TanahTransmigrasi::findOrFail($id);
-        return view('dashboard.geojson.edit', compact('tanah'));
+        return view('dashboard.geojson.edit', compact('tanah', 'rekomendasis'));
     }
 
     public function update(Request $request, $id)

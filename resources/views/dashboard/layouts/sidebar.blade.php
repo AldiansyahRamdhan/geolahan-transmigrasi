@@ -10,6 +10,12 @@
              </a>
          </li><!-- End Dashboard Nav -->
          <li class="nav-item">
+             <a class="nav-link {{ Request::is('rekomendasi*') ? '' : 'collapsed' }}" href="/rekomendasi">
+                 <i class="bi bi-bookmark-check"></i>
+                 <span>Rekomendasi</span>
+             </a>
+         </li><!-- End Dashboard Nav -->
+         <li class="nav-item">
              <a class="nav-link {{ Request::is('tanah*') ? '' : 'collapsed' }}" href="/tanah">
                  <i class="bi bi-card-list"></i>
                  <span>Tanah</span>

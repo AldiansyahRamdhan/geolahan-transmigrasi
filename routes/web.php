@@ -5,6 +5,8 @@ use App\Models\TanahTransmigrasi;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TanahController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RekomendasiController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +34,7 @@ Route::middleware('auth')->group(function () {
         return view('data-penduduk', compact('tanahs'));
     });
     Route::resource('tanah', TanahController::class)->middleware('admin');
+    Route::resource('rekomendasi', RekomendasiController::class)->middleware('admin');
     Route::get('/dashboard', function () {
         return view('dashboard.index', [
             'user' => auth()->user(),

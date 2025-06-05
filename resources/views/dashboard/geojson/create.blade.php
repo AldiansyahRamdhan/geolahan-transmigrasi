@@ -22,6 +22,17 @@
                 <div class="card-title">
                     <h5>Tambah Data Lokasi Tanah Transmigrasi</h5>
                 </div>
+
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <form action="{{ route('tanah.store') }}" method="POST">
                     @csrf
                     <div class="row">
@@ -78,59 +89,93 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="kadar_air">Kadar Air</label>
-                                <input type="text" class="form-control @error('kadar_air') is-invalid @enderror"
-                                    id="kadar_air" name="kadar_air" value="{{ old('kadar_air') }}" required>
-                                @error('kadar_air')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="form-group">
-                                <label for="lereng">Lereng</label>
-                                <input type="text" class="form-control @error('lereng') is-invalid @enderror"
-                                    id="lereng" name="lereng" value="{{ old('lereng') }}" required>
-                                @error('lereng')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-
-                            <div class="form-group">
-                                <label class="mt-3" for="penggunaan">Penggunaan Tanah</label>
-                                <input type="text" class="form-control @error('penggunaan') is-invalid @enderror"
-                                    id="penggunaan" name="penggunaan" value="{{ old('penggunaan') }}" required>
-                                @error('penggunaan')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="form-group">
-                                <label class="mt-3" for="jenis_tanah">Jenis Tanah</label>
-                                <input type="text" class="form-control @error('jenis_tanah') is-invalid @enderror"
-                                    id="jenis_tanah" name="jenis_tanah" value="{{ old('jenis_tanah') }}" required>
-                                @error('jenis_tanah')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="form-group">
-                                <label for="rekomendasi_tanaman">Rekomendasi Tanaman</label>
-                                <input type="text"
-                                    class="form-control @error('rekomendasi_tanaman') is-invalid @enderror"
-                                    id="rekomendasi_tanaman" name="rekomendasi_tanaman"
-                                    value="{{ old('rekomendasi_tanaman') }}" required>
-                                @error('rekomendasi_tanaman')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="form-group">
                                 <label for="geojson">GeoJSON (Titik Lokasi)</label>
-                                <textarea class="form-control @error('geojson') is-invalid @enderror" name="geojson" id="geojson" readonly
-                                    required>{{ old('geojson') }}</textarea>
+                                <textarea class="form-control @error('geojson') is-invalid @enderror" name="geojson" id="geojson" readonly required>{{ old('geojson') }}</textarea>
                                 @error('geojson')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+
+                            <div class="form-group">
+                                <label class="mt-3" for="penggunaan">Penggunaan Tanah</label>
+                                <select class="form-control @error('penggunaan') is-invalid @enderror" id="penggunaan"
+                                    name="penggunaan" required>
+                                    <option value="">Pilih...</option>
+                                    @foreach ($rekomendasis->unique('penggunaan') as $r)
+                                        <option value="{{ $r->penggunaan }}"
+                                            {{ old('penggunaan') == $r->penggunaan ? 'selected' : '' }}>
+                                            {{ $r->penggunaan }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('penggunaan')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="mt-3" for="jenis_tanah">Jenis Tanah</label>
+                                <select class="form-control @error('jenis_tanah') is-invalid @enderror" id="jenis_tanah"
+                                    name="jenis_tanah" required>
+                                    <option value="">Pilih...</option>
+                                    @foreach ($rekomendasis->unique('jenis_tanah') as $r)
+                                        <option value="{{ $r->jenis_tanah }}"
+                                            {{ old('jenis_tanah') == $r->jenis_tanah ? 'selected' : '' }}>
+                                            {{ $r->jenis_tanah }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('jenis_tanah')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kadar_air" class="mt-3">Kadar Air</label>
+                                <select class="form-control @error('kadar_air') is-invalid @enderror" id="kadar_air"
+                                    name="kadar_air" required>
+                                    <option value="">Pilih...</option>
+                                    @foreach ($rekomendasis->unique('kadar_air') as $r)
+                                        <option value="{{ $r->kadar_air }}"
+                                            {{ old('kadar_air') == $r->kadar_air ? 'selected' : '' }}>
+                                            {{ $r->kadar_air }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('kadar_air')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lereng" class="mt-3">Lereng</label>
+                                <select class="form-control @error('lereng') is-invalid @enderror" id="lereng"
+                                    name="lereng" required>
+                                    <option value="">Pilih...</option>
+                                    @foreach ($rekomendasis->unique('lereng') as $r)
+                                        <option value="{{ $r->lereng }}"
+                                            {{ old('lereng') == $r->lereng ? 'selected' : '' }}>
+                                            {{ $r->lereng }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('lereng')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label for="rekomendasi_tanaman" class="mt-3">Rekomendasi Tanaman</label>
+                                <input type="text" class="form-control" id="rekomendasi_tanaman"
+                                    name="rekomendasi_tanaman" readonly value="{{ old('rekomendasi_tanaman') }}">
+                            </div>
+
+
                         </div>
                     </div>
 
@@ -146,6 +191,38 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="https://unpkg.com/leaflet-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        const rekomendasiData = @json($rekomendasis);
+
+        function updateRekomendasiTanaman() {
+            const penggunaan = document.getElementById('penggunaan').value;
+            const jenis_tanah = document.getElementById('jenis_tanah').value;
+            const kadar_air = document.getElementById('kadar_air').value;
+            const lereng = document.getElementById('lereng').value;
+
+            // Cek apakah semua input sudah diisi
+            if (!penggunaan || !jenis_tanah || !kadar_air || !lereng) {
+                document.getElementById('rekomendasi_tanaman').value = '';
+                return; // Kalau belum lengkap, kosongkan dan keluar
+            }
+
+            const hasil = rekomendasiData.find(item =>
+                item.penggunaan === penggunaan &&
+                item.jenis_tanah === jenis_tanah &&
+                item.kadar_air === kadar_air &&
+                item.lereng === lereng
+            );
+
+            document.getElementById('rekomendasi_tanaman').value = hasil ? hasil.rekomendasi_tanaman :
+                'Rekomendasi tidak ditemukan';
+        }
+
+        document.getElementById('penggunaan').addEventListener('change', updateRekomendasiTanaman);
+        document.getElementById('jenis_tanah').addEventListener('change', updateRekomendasiTanaman);
+        document.getElementById('kadar_air').addEventListener('change', updateRekomendasiTanaman);
+        document.getElementById('lereng').addEventListener('change', updateRekomendasiTanaman);
+    </script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
