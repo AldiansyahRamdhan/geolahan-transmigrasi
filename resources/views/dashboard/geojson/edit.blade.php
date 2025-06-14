@@ -37,7 +37,7 @@
                                 @enderror
                             </div>
                             <div class="form-group">
-                                <label class="mt-3" for="tahun">Tanggal tahun</label>
+                                <label class="mt-3" for="tahun">Tahun</label>
                                 <input type="number" class="form-control @error('tahun') is-invalid @enderror"
                                     id="tahun" name="tahun" value="{{ old('tahun', $tanah->tahun ?? '') }}" required>
                                 @error('tahun')
