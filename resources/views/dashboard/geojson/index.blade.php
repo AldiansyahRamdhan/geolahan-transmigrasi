@@ -28,7 +28,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>NIB</th>
-                                <th>Tempat&nbsp;/&nbsp;Tanggal Lahir</th>
+                                <th>Tahun</th>
                                 <th>Kelurahan</th>
                                 <th>Kecamatan</th>
                                 <th>Luas&nbsp;(m²)</th>
@@ -47,8 +47,7 @@
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $tanah->nib }}</td>
 
-                                    <td>{{ $tanah->tempat_lahir }},
-                                        {{ \Carbon\Carbon::parse($tanah->tanggal_lahir)->format('d-m-Y') }}</td>
+                                    <td>{{ $tanah->tahun }}</td>
 
                                     <td>{{ $tanah->kelurahan }}</td>
                                     <td>{{ $tanah->kecamatan }}</td>
