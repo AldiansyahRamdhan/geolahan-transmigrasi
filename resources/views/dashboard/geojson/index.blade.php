@@ -110,6 +110,7 @@
         </div>
     </div>
 
+
     <script>
         const leafletMaps = {};
 
@@ -121,37 +122,78 @@
                     const id = modal.getAttribute('data-id');
                     const mapId = `map${id}`;
                     const geojsonEl = document.getElementById(`geojson-data-${id}`);
+
                     if (!geojsonEl || leafletMaps[id]) return;
 
                     const geojson = JSON.parse(geojsonEl.textContent);
                     const mapContainer = document.getElementById(mapId);
                     mapContainer.innerHTML = '';
 
-                    const map = L.map(mapId).setView([-7.2626, 106.9179], 13);
-                    leafletMaps[id] = map;
+                    if (!navigator.geolocation) {
+                        alert("Geolocation tidak didukung browser ini.");
+                        return;
+                    }
 
-                    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; OpenStreetMap contributors'
-                    }).addTo(map);
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        const userLocation = L.latLng(userLat, userLng);
+                        console.log("Lokasi saat ini:",
+                            userLocation); // 🔍 Debug di console
+                        const map = L.map(mapId).setView(userLocation, 15);
+                        leafletMaps[id] = map;
 
-                    const satellite = L.tileLayer(
-                        'https://server.arcgisonline.com/ArcGIS/rest/services/' +
-                        'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: 'Tiles &copy; Esri'
-                        });
+                        const osm = L.tileLayer(
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '&copy; OpenStreetMap contributors'
+                            }).addTo(map);
 
-                    const geoLayer = L.geoJSON(geojson).addTo(map);
+                        const satellite = L.tileLayer(
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                                attribution: 'Tiles &copy; Esri'
+                            });
 
-                    L.control.layers({
-                        "Peta Biasa": osm,
-                        "Peta Satelit": satellite
-                    }, {
-                        "Wilayah Tanah": geoLayer
-                    }, {
-                        collapsed: false
-                    }).addTo(map);
+                        const geoLayer = L.geoJSON(geojson).addTo(map);
+                        const bounds = geoLayer.getBounds();
 
-                    map.fitBounds(geoLayer.getBounds());
+                        if (!bounds.isValid()) {
+                            console.warn("GeoJSON bounds tidak valid.");
+                            return;
+                        }
+
+                        const destination = bounds.getCenter();
+
+                        L.control.layers({
+                            "Peta Biasa": osm,
+                            "Peta Satelit": satellite
+                        }, {
+                            "Wilayah Tanah": geoLayer
+                        }, {
+                            collapsed: false
+                        }).addTo(map);
+
+                        map.fitBounds(bounds);
+
+                        // Tambahkan marker lokasi pengguna
+                        L.marker(userLocation)
+                            .addTo(map)
+                            .bindPopup("Lokasi Anda Saat Ini")
+                            .openPopup();
+
+                        // Tambahkan routing dari lokasi pengguna ke GeoJSON
+                        L.Routing.control({
+                            waypoints: [
+                                userLocation,
+                                destination
+                            ],
+                            routeWhileDragging: true,
+                            draggableWaypoints: true
+                        }).addTo(map);
+
+                        setTimeout(() => map.invalidateSize(), 300);
+                    }, function(error) {
+                        alert("Gagal mendapatkan lokasi: " + error.message);
+                    });
                 });
             });
         });
