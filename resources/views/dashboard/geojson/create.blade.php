@@ -38,6 +38,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label class="mt-3" for="pemilik">Pemilik Tanah</label>
+                                <input type="text" class="form-control @error('pemilik') is-invalid @enderror"
+                                    id="pemilik" name="pemilik" value="{{ old('pemilik') }}" required>
+                                @error('pemilik')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
                                 <label class="mt-3" for="nib">NIB</label>
                                 <input type="text" class="form-control @error('nib') is-invalid @enderror" id="nib"
                                     name="nib" value="{{ old('nib') }}" required>
@@ -226,6 +234,33 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // === Batas wilayah dalam bentuk FeatureCollection ===
+            const batasWilayahFC = {!! $batas->batas !!};
+
+            // Ambil polygon pertama dari FeatureCollection
+            const batasWilayah = batasWilayahFC.features[0];
+
+            // === Polygon masking: merah di luar batas ===
+            const outerRing = [
+                [180, 90],
+                [-180, 90],
+                [-180, -90],
+                [180, -90],
+                [180, 90]
+            ];
+
+            const maskingLayer = {
+                type: "Feature",
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [
+                        outerRing,
+                        ...batasWilayah.geometry.coordinates // lubang (hole)
+                    ]
+                },
+                properties: {}
+            };
+
             // Base layers
             var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
@@ -237,21 +272,40 @@
                 }
             );
 
-            // Inisialisasi awal peta
+            // Inisialisasi peta
             var map = L.map('map', {
-                center: [-7.2626, 106.9179], // fallback
+                center: [-7.2626, 106.9179],
                 zoom: 15,
-                layers: [osmLayer] // layer default
+                layers: [osmLayer]
             });
 
-            // Layer switcher
             var baseMaps = {
                 "OpenStreetMap": osmLayer,
                 "Citra Satelit": satelliteLayer
             };
             L.control.layers(baseMaps).addTo(map);
 
-            // Layer GeoJSON untuk tanah
+            // Tampilkan area luar batas sebagai merah transparan
+            L.geoJSON(maskingLayer, {
+                style: {
+                    color: 'red',
+                    fillColor: 'red',
+                    fillOpacity: 0.3,
+                    weight: 0
+                }
+            }).addTo(map);
+
+            // Tampilkan garis batas wilayah
+            const batasLayer = L.geoJSON(batasWilayah, {
+                style: {
+                    color: 'red',
+                    fillOpacity: 0,
+                    weight: 2
+                }
+            }).addTo(map);
+            map.fitBounds(batasLayer.getBounds());
+
+            // ====== Layer data tanah dari API ======
             fetch('/api/tanah-geojson')
                 .then(response => response.json())
                 .then(data => {
@@ -260,25 +314,17 @@
                             onEachFeature: function(feature, layer) {
                                 const props = feature.properties;
                                 layer.bindPopup(`
-                                    <strong>${props.nama}</strong><br>
-                                    NIK: ${props.nik}<br>
-                                    Desa: ${props.desa}<br>
-                                    Rekomendasi: ${props.rekomendasi_tanaman}
-                                `);
+                                <strong>${props.nama}</strong><br>
+                                NIK: ${props.nik}<br>
+                                Desa: ${props.desa}<br>
+                                Rekomendasi: ${props.rekomendasi_tanaman}
+                            `);
                             },
-                            style: function(feature) {
-                                return {
-                                    color: '#3388ff',
-                                    weight: 3,
-                                    opacity: 1
-                                };
+                            style: {
+                                color: '#3388ff',
+                                weight: 2
                             }
                         }).addTo(map);
-
-                        // Zoom ke fitur
-                        map.fitBounds(geojsonLayer.getBounds());
-                    } else {
-                        console.error('Data GeoJSON tidak valid');
                     }
                 })
                 .catch(error => {
@@ -292,8 +338,8 @@
             var drawControl = new L.Control.Draw({
                 draw: {
                     polygon: true,
-                    polyline: false,
                     rectangle: true,
+                    polyline: false,
                     circle: false,
                     marker: true,
                     circlemarker: false
@@ -304,16 +350,26 @@
             });
             map.addControl(drawControl);
 
-            // Event ketika menggambar selesai
+            // Validasi gambar berada DI DALAM batas
             map.on('draw:created', function(e) {
                 var layer = e.layer;
+                const geojson = layer.toGeoJSON();
+
+                const isInside = turf.booleanWithin(geojson, batasWilayah);
+
+                if (!isInside) {
+                    alert('Gambar HARUS berada DI DALAM area putih (tidak boleh di area merah).');
+                    return;
+                }
+
+                drawnItems.clearLayers();
                 drawnItems.addLayer(layer);
 
-                // Konversi ke GeoJSON dan tampilkan di textarea (dengan id 'geojson')
-                var geojson = drawnItems.toGeoJSON();
-                var pretty = JSON.stringify(geojson, null, 2);
-                var output = document.getElementById('geojson');
-                if (output) output.value = pretty;
+                const hasil = drawnItems.toGeoJSON();
+                const output = document.getElementById('geojson');
+                if (output) {
+                    output.value = JSON.stringify(hasil, null, 2);
+                }
             });
 
             // ====== Geocoder (pencarian lokasi) ======
@@ -333,8 +389,11 @@
                     })
                     .addTo(map);
             } else {
-                console.warn("Geocoder tidak ditemukan. Pastikan sudah menyertakan plugin geocoder Leaflet.");
+                console.warn("Plugin Geocoder Leaflet tidak ditemukan.");
             }
         });
     </script>
+
+
+
 @endsection

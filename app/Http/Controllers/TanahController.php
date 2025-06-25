@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Batas;
 use App\Models\Rekomendasi;
 use Illuminate\Http\Request;
 use App\Models\TanahTransmigrasi;
@@ -11,7 +12,8 @@ class TanahController extends Controller
     public function index()
     {
         $tanahs = TanahTransmigrasi::latest()->get();
-        return view('dashboard.geojson.index', compact('tanahs'));
+        $batas = Batas::get()->first();
+        return view('dashboard.geojson.index', compact('tanahs', 'batas'));
     }
 
     /**
@@ -20,9 +22,10 @@ class TanahController extends Controller
     public function create()
     {
         $rekomendasis = Rekomendasi::all();
-
+        $batas = Batas::get()->first();
         return view('dashboard.geojson.create', [
             'rekomendasis' => $rekomendasis,
+            'batas' => $batas
         ]);
     }
 
@@ -33,6 +36,7 @@ class TanahController extends Controller
     {
 
         $validated = $request->validate([
+            'pemilik' => 'required|string|max:255',
             'kecamatan' => 'required|string|max:255',
             'kelurahan' => 'required|string|max:255',
             'tipe_hak' => 'required|string|max:255',
@@ -54,15 +58,18 @@ class TanahController extends Controller
 
     public function edit($id)
     {
+        $batas = Batas::first(); // di controller
+
         $rekomendasis = Rekomendasi::all();
         $tanah = TanahTransmigrasi::findOrFail($id);
-        return view('dashboard.geojson.edit', compact('tanah', 'rekomendasis'));
+        return view('dashboard.geojson.edit', compact('tanah', 'rekomendasis', 'batas'));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
 
+            'pemilik' => 'required|string|max:255',
             'kecamatan' => 'required|string|max:255',
             'kelurahan' => 'required|string|max:255',
             'tipe_hak' => 'required|string|max:255',

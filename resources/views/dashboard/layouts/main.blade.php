@@ -45,7 +45,7 @@
 
     <!-- Leaflet Draw -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
-
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <!-- Optional: custom map styling -->
     <style>
         #map {
@@ -80,6 +80,7 @@
     <!-- Leaflet Draw JS -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <!-- Optional: custom JS -->
     <script>
         console.log("Semua plugin Leaflet berhasil dimuat.");

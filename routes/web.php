@@ -3,6 +3,7 @@
 use App\Models\TanahTransmigrasi;
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BatasController;
 use App\Http\Controllers\TanahController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekomendasiController;
@@ -28,7 +29,7 @@ Route::middleware('auth')->group(function () {
         return view('index');
     });
 
-
+    Route::post('/batas', [BatasController::class, 'store'])->name('batas.store')->middleware('admin');
     Route::get('/data/penduduk', function () {
         $tanahs = TanahTransmigrasi::latest()->get();
         return view('data-penduduk', compact('tanahs'));

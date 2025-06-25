@@ -29,6 +29,15 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label class="mt-3" for="pemilik">Pemilik Tanah</label>
+                                <input type="text" class="form-control @error('pemilik') is-invalid @enderror"
+                                    id="pemilik" name="pemilik" value="{{ old('pemilik', $tanah->pemilik ?? '') }}"
+                                    required>
+                                @error('pemilik')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
                                 <label class="mt-3" for="nib">NIB</label>
                                 <input type="text" class="form-control @error('nib') is-invalid @enderror" id="nib"
                                     name="nib" value="{{ old('nib', $tanah->nib ?? '') }}" required>
@@ -222,6 +231,31 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const batasWilayahFC = {!! $batas->batas !!}; // FeatureCollection
+            const batasWilayah = batasWilayahFC.features[0]; // Ambil poligon pertama
+
+            // === Buat masking luar merah ===
+            const outerRing = [
+                [180, 90],
+                [-180, 90],
+                [-180, -90],
+                [180, -90],
+                [180, 90]
+            ];
+
+            const maskingLayer = {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [
+                        outerRing,
+                        ...batasWilayah.geometry.coordinates
+                    ]
+                }
+            };
+
+            // === Peta dasar
             var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             });
@@ -232,9 +266,9 @@
                 });
 
             var map = L.map('map', {
-                center: [-7.2626, 106.9179], // default center
+                center: [-7.2626, 106.9179],
                 zoom: 15,
-                layers: [osm] // default layer
+                layers: [osm]
             });
 
             var baseLayers = {
@@ -242,8 +276,30 @@
                 "Citra Satelit": satellite
             };
 
-            L.control.layers(baseLayers).addTo(map); // Add the layer switcher
+            L.control.layers(baseLayers).addTo(map);
 
+            // === Tambahkan masking merah
+            L.geoJSON(maskingLayer, {
+                style: {
+                    color: 'red',
+                    fillColor: 'red',
+                    fillOpacity: 0.3,
+                    weight: 0
+                }
+            }).addTo(map);
+
+            // === Tampilkan batas wilayah (outline)
+            const batasLayer = L.geoJSON(batasWilayah, {
+                style: {
+                    color: 'red',
+                    fillOpacity: 0,
+                    weight: 2
+                }
+            }).addTo(map);
+
+            map.fitBounds(batasLayer.getBounds());
+
+            // === Inisialisasi Layer Gambar
             var drawnItems = new L.FeatureGroup().addTo(map);
 
             @if ($tanah->geojson)
@@ -254,11 +310,12 @@
                 });
             @endif
 
+            // === Control menggambar
             var drawControl = new L.Control.Draw({
                 draw: {
                     polygon: true,
-                    polyline: false,
                     rectangle: true,
+                    polyline: false,
                     circle: false,
                     marker: true,
                     circlemarker: false
@@ -269,19 +326,30 @@
             });
             map.addControl(drawControl);
 
+            // === Validasi gambar agar di dalam batas
             map.on('draw:created', function(e) {
                 drawnItems.clearLayers();
-                drawnItems.addLayer(e.layer);
 
-                var geojson = drawnItems.toGeoJSON();
-                document.getElementById('geojson').value = JSON.stringify(geojson, null, 2);
+                var layer = e.layer;
+                var geojson = layer.toGeoJSON();
+                const isInside = turf.booleanWithin(geojson, batasWilayah);
+
+                if (!isInside) {
+                    alert('Gambar harus berada di dalam area putih (bukan area merah).');
+                    return;
+                }
+
+                drawnItems.addLayer(layer);
+                document.getElementById('geojson').value = JSON.stringify(drawnItems.toGeoJSON(), null, 2);
             });
 
+            // === Update saat diedit
             map.on('draw:edited', function() {
                 var geojson = drawnItems.toGeoJSON();
                 document.getElementById('geojson').value = JSON.stringify(geojson, null, 2);
             });
 
+            // === Geocoder
             if (typeof L.Control.Geocoder !== 'undefined') {
                 L.Control.geocoder({
                         defaultMarkGeocode: false
@@ -293,4 +361,5 @@
             }
         });
     </script>
+
 @endsection
