@@ -94,10 +94,12 @@
                     </div>
                 </div>
 
+
                 <!-- Modal Peta -->
-                <div class="modal fade" id="mapModal{{ $tanah->id }}" tabindex="-1" data-id="{{ $tanah->id }}"
-                    aria-labelledby="mapModalLabel{{ $tanah->id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal fade p-0 m-0" id="mapModal{{ $tanah->id }}" tabindex="-1"
+                    data-id="{{ $tanah->id }}" aria-labelledby="mapModalLabel{{ $tanah->id }}" aria-hidden="true"
+                    style="z-index: 999999">
+                    <div class="modal-dialog modal-fullscreen"> {{-- Ubah jadi fullscreen --}}
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 class="modal-title" id="mapModalLabel{{ $tanah->id }}">
@@ -106,15 +108,16 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
-                                <div id="map{{ $tanah->id }}" style="height: 400px;"></div>
+                            <div class="modal-body p-0"> {{-- tanpa padding untuk fullscreen map --}}
+                                <div id="map{{ $tanah->id }}" style="height: 100vh;"></div>
                                 <script type="application/json" id="geojson-data-{{ $tanah->id }}">
-                                    {!! $tanah->geojson !!}
-                                </script>
+                    {!! $tanah->geojson !!}
+                </script>
                             </div>
                         </div>
                     </div>
                 </div>
+
             @empty
                 <div class="col-12">
                     <div class="alert alert-warning text-center">Belum ada data tanah.</div>
@@ -155,34 +158,15 @@
                     const id = modal.getAttribute('data-id');
                     const mapId = `map${id}`;
                     const geojsonEl = document.getElementById(`geojson-data-${id}`);
+
                     if (!geojsonEl || leafletMaps[id]) return;
 
                     const geojson = JSON.parse(geojsonEl.textContent);
                     const mapContainer = document.getElementById(mapId);
                     mapContainer.innerHTML = '';
 
-                    // Ambil koordinat pertama dari fitur pertama
-                    let latlng = [-7.2626, 106.9179]; // fallback koordinat default
-
-                    if (geojson.features && geojson.features.length > 0) {
-                        const feature = geojson.features[0];
-                        const geom = feature.geometry;
-
-                        if (geom.type === 'Polygon') {
-                            const firstCoord = geom.coordinates[0][0];
-                            latlng = [firstCoord[1], firstCoord[0]];
-                        } else if (geom.type === 'Point') {
-                            latlng = [geom.coordinates[1], geom.coordinates[0]];
-                        } else if (geom.type === 'MultiPolygon') {
-                            const firstCoord = geom.coordinates[0][0][0];
-                            latlng = [firstCoord[1], firstCoord[0]];
-                        }
-                    }
-
-                    console.log(latlng);
-
-                    // Inisialisasi peta dengan setView dari data koordinat
-                    const map = L.map(mapId).setView(latlng, 18);
+                    // Init map (sementara dummy koordinat)
+                    const map = L.map(mapId).setView([-7.26, 106.91], 15);
                     leafletMaps[id] = map;
 
                     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -191,24 +175,64 @@
 
                     const satellite = L.tileLayer(
                         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: 'Tiles &copy; Esri'
+                            attribution: 'Tiles © Esri'
                         });
 
-                    // Tambahkan GeoJSON layer
                     const geoLayer = L.geoJSON(geojson).addTo(map);
+                    const bounds = geoLayer.getBounds();
 
-                    // Kontrol Layer
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds);
+                    }
+
+                    const destination = bounds.getCenter();
+
+                    // Layer Switcher
                     L.control.layers({
                         "Peta Biasa": osm,
                         "Peta Satelit": satellite
                     }, {
                         "Wilayah Tanah": geoLayer
-                    }, {
-                        collapsed: false
                     }).addTo(map);
 
-                    // Fit bounds agar seluruh area terlihat (bisa override setView)
-                    map.fitBounds(geoLayer.getBounds());
+                    // Ambil lokasi pengguna (Geolocation)
+                    if (!navigator.geolocation) {
+                        alert("Browser tidak mendukung geolokasi.");
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const userLatLng = L.latLng(position.coords.latitude, position
+                            .coords.longitude);
+
+                        // Tambahkan marker lokasi pengguna
+                        L.marker(userLatLng).addTo(map).bindPopup("Lokasi Anda")
+                            .openPopup();
+
+                        // Tambahkan Routing
+                        L.Routing.control({
+                            waypoints: [
+                                userLatLng,
+                                destination
+                            ],
+                            routeWhileDragging: false,
+                            draggableWaypoints: false,
+                            showAlternatives: false,
+                            collapsible: true,
+                            show: true,
+                            createMarker: function(i, waypoint, n) {
+                                return L.marker(waypoint.latLng).bindPopup(i ===
+                                    0 ? "Anda di sini" : "Lokasi Tanah");
+                            }
+                        }).addTo(map);
+
+                        setTimeout(() => {
+                            map.invalidateSize();
+                            map.setZoom(15);
+                        }, 300);
+                    }, function(error) {
+                        alert("Gagal mendapatkan lokasi: " + error.message);
+                    });
                 });
             });
         });

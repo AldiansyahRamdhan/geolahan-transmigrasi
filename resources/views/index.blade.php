@@ -230,66 +230,46 @@
                         latlng = [firstCoord[1], firstCoord[0]];
                     }
 
-                    // Inisialisasi peta
-                    var map = L.map('map', {
+                    const map = L.map('map', {
                         center: latlng,
                         zoom: 18
                     });
 
-                    // Base layers
-                    var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         maxZoom: 19,
                         attribution: '© OpenStreetMap'
-                    });
+                    }).addTo(map);
 
-                    var esriSat = L.tileLayer(
-                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: 'Imagery © Esri'
-                        });
-
-                    var esriAdminLabels = L.tileLayer(
-                        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: 'Admin Labels © Esri'
-                        });
-
-                    var esriTransportationLabels = L.tileLayer(
-                        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: 'Transportation Labels © Esri'
-                        });
-
-                    var satelitLengkap = L.layerGroup([
-                        esriSat,
-                        esriAdminLabels,
-                        esriTransportationLabels
+                    const satelitLengkap = L.layerGroup([
+                        L.tileLayer(
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                                attribution: 'Imagery © Esri'
+                            }),
+                        L.tileLayer(
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                                attribution: 'Admin Labels © Esri'
+                            }),
+                        L.tileLayer(
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+                                attribution: 'Transportation Labels © Esri'
+                            })
                     ]);
 
-                    satelitLengkap.addTo(map);
-
-                    var baseLayers = {
+                    const baseLayers = {
                         "Peta Biasa": osm,
                         "Satelit + Jalan + Nama Kota/Desa": satelitLengkap
                     };
 
-                    // Tambahkan legend
-                    var legend = L.control({
-                        position: 'bottomright'
-                    });
-                    legend.onAdd = function(map) {
-                        var div = L.DomUtil.create('div', 'info legend');
-                        var grades = [0, 700, 1900, 3000];
-                        var colors = ['#3388ff', '#ff5733', '#33ff57', '#28a745'];
-
-                        return div;
-                    };
-                    legend.addTo(map);
-
                     L.control.layers(baseLayers).addTo(map);
+                    satelitLengkap.addTo(map);
 
-                    // Semua fitur untuk pencarian
                     const allFeatures = [];
-                    let geojsonLayer = L.geoJSON(data, {
+                    let routingControl = null;
+
+                    const geojsonLayer = L.geoJSON(data, {
                         onEachFeature: function(feature, layer) {
                             const props = feature.properties;
+                            const center = layer.getBounds().getCenter();
                             layer.bindPopup(`
                                 <table style="border-collapse: collapse; width: 100%;">
                                     <tr><td><strong>Kecamatan</strong></td><td>: ${props.kecamatan}</td></tr>
@@ -303,6 +283,13 @@
                                     <tr><td><strong>Kadar Air</strong></td><td>: ${props.kadar_air}</td></tr>
                                     <tr><td><strong>Lereng</strong></td><td>: ${props.lereng}</td></tr>
                                     <tr><td><strong>Rekomendasi</strong></td><td>: ${props.rekomendasi_tanaman}</td></tr>
+                                    <tr>
+                                        <td colspan="2" class="text-center">
+                                            <button class="btn btn-sm btn-primary btn-rute" data-lat="${center.lat}" data-lng="${center.lng}">
+                                                Petunjuk Arah
+                                            </button>
+                                        </td>
+                                    </tr>
                                 </table>
                             `);
                             allFeatures.push(layer);
@@ -319,123 +306,47 @@
 
                     map.fitBounds(geojsonLayer.getBounds());
 
-                    // Fungsi utama untuk filter berdasarkan dua radio (luas + jenis tanah)
-                    function applyFilters() {
-                        const selectedLuas = document.querySelector('input[name="filterLuas"]:checked')?.value || 'all';
-                        const selectedJenisTanah = document.querySelector('input[name="filterJenisTanah"]:checked')
-                            ?.value || 'all';
-                        const selectedKadarAir = document.querySelector('input[name="filterKadarAir"]:checked')
-                            ?.value || 'all';
+                    // Delegasi event tombol rute
+                    map.on('popupopen', function(e) {
+                        const btn = e.popup._contentNode.querySelector('.btn-rute');
+                        if (btn) {
+                            btn.addEventListener('click', () => {
+                                const destLat = parseFloat(btn.getAttribute('data-lat'));
+                                const destLng = parseFloat(btn.getAttribute('data-lng'));
+                                const destination = L.latLng(destLat, destLng);
 
-                        geojsonLayer.clearLayers();
+                                if (!navigator.geolocation) {
+                                    alert("Browser tidak mendukung geolocation.");
+                                    return;
+                                }
 
-                        const filteredFeatures = data.features.filter(feature => {
-                            const luas = parseFloat(feature.properties.luas);
-                            const jenis_tanah = feature.properties.jenis_tanah;
-                            const kadar_air = feature.properties.kadar_air;
+                                navigator.geolocation.getCurrentPosition(function(position) {
+                                    const userLatLng = L.latLng(position.coords.latitude,
+                                        position.coords.longitude);
 
-                            // Filter luas
-                            const matchLuas =
-                                selectedLuas === 'all' ||
-                                (selectedLuas === 'lt700' && luas < 700) ||
-                                (selectedLuas === '700to1900' && luas >= 700 && luas <= 1900) ||
-                                (selectedLuas === 'gt1900' && luas > 1900);
+                                    if (routingControl) {
+                                        map.removeControl(routingControl);
+                                    }
 
-                            // Filter jenis tanah
-                            const matchJenisTanah =
-                                selectedJenisTanah === 'all' ||
-                                jenis_tanah === selectedJenisTanah;
-
-                            // Filter kadar air
-                            const matchKadarAir =
-                                selectedKadarAir === 'all' ||
-                                kadar_air === selectedKadarAir;
-
-                            return matchLuas && matchJenisTanah && matchKadarAir;
-                        });
-
-                        geojsonLayer.addData(filteredFeatures);
-
-                        if (filteredFeatures.length > 0) {
-                            const bounds = geojsonLayer.getBounds();
-                            if (bounds.isValid()) map.fitBounds(bounds);
-                        }
-                    }
-
-                    // Tambahkan event listener untuk semua filter
-                    document.querySelectorAll('input[name="filterLuas"]').forEach(radio => {
-                        radio.addEventListener('change', applyFilters);
-                    });
-                    document.querySelectorAll('input[name="filterJenisTanah"]').forEach(radio => {
-                        radio.addEventListener('change', applyFilters);
-                    });
-                    document.querySelectorAll('input[name="filterKadarAir"]').forEach(radio => {
-                        radio.addEventListener('change', applyFilters);
-                    });
-
-                    function debounce(func, delay = 300) {
-                        let timeout;
-                        return function(...args) {
-                            clearTimeout(timeout);
-                            timeout = setTimeout(() => func.apply(this, args), delay);
-                        };
-                    }
-
-
-                    // Fitur pencarian
-                    const searchInput = document.getElementById('searchInput');
-                    searchInput.addEventListener('input', debounce(function() {
-                        const query = this.value.toLowerCase();
-
-                        // Kosongkan pencarian: reset semua
-                        if (query === '') {
-                            allFeatures.forEach(layer => {
-                                geojsonLayer.resetStyle(layer);
-                                layer.closePopup();
-                            });
-                            return;
-                        }
-
-                        const matches = [];
-
-                        allFeatures.forEach(layer => {
-                            const props = layer.feature.properties;
-                            const nama = props.nama?.toLowerCase() || '';
-                            const nik = props.nik?.toLowerCase() || '';
-                            const desa = props.desa?.toLowerCase() || '';
-
-                            if (
-                                nama.includes(query) ||
-                                nik.includes(query) ||
-                                desa.includes(query)
-                            ) {
-                                layer.setStyle({
-                                    color: 'yellow'
+                                    routingControl = L.Routing.control({
+                                        waypoints: [userLatLng, destination],
+                                        routeWhileDragging: false,
+                                        showAlternatives: false,
+                                        collapsible: true,
+                                        createMarker: function(i, wp) {
+                                            return L.marker(wp.latLng).bindPopup(
+                                                i === 0 ? "Lokasi Anda" :
+                                                "Lokasi Tanah");
+                                        }
+                                    }).addTo(map);
+                                }, function(error) {
+                                    alert("Gagal mendapatkan lokasi Anda: " + error.message);
                                 });
-                                matches.push(layer);
-                            } else {
-                                geojsonLayer.resetStyle(layer);
-                                layer.closePopup();
-                            }
-                        });
-
-                        if (matches.length > 0) {
-                            const group = L.featureGroup(matches);
-                            map.fitBounds(group.getBounds());
-
-                            // Buka hanya satu popup (pertama)
-                            matches[0].openPopup();
-                        } else {
-                            console.log('Data tidak ditemukan');
+                            });
                         }
-                    }, 300)); // debounce: tunggu 300ms setelah ketikan terakhir
-
-
-                    // Kode di bawah ini (Polygon_CGMK_WEBGIS_FIKS_1, dsb) HARUS dipindahkan ke dalam blok ini jika ingin menggunakan variabel map yang sama
-                    // Jika ingin tetap, pastikan variabel map sudah dideklarasikan sebelum digunakan
-
+                    });
                 } else {
-                    console.error('Invalid GeoJSON data:', data);
+                    console.error('GeoJSON tidak valid:', data);
                 }
             });
     </script>
